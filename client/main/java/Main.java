@@ -9,14 +9,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class Main extends Application {
+public class Main extends Application implements ServerConst{
     Socket socket = null;
     DataOutputStream out;
     DataInputStream in;
     private boolean isAuthorized = false;
-
-    private static final int PORT = 8189;
-    private static final String SERVER_URL = "localhost";
 
     public static void main(String[] args) {
         launch(args);
@@ -53,5 +50,11 @@ public class Main extends Application {
 
     public void auth(){
         System.out.println("auth");
+        try {
+            out.write(2);
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
