@@ -4,4 +4,5 @@ public interface Server_API {
     String AUTH_SUCCESSFUl = "/authok";
     String AUTH_DENIED = "/authdenied";
     String ECHO = "/echo";
+    String FILE_OK = "/fileok";
 }

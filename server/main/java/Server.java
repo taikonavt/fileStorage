@@ -8,10 +8,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
-public class Server implements ServerConst {
+public class Server implements CommonConst {
     private static final int MAX_OBJ_SIZE = 1024 * 1024 * 100;
 
     public void run() throws Exception {
@@ -27,6 +28,7 @@ public class Server implements ServerConst {
                         public void initChannel(SocketChannel ch) throws Exception {
                             ch.pipeline().addLast(
                                     new ObjectDecoder(MAX_OBJ_SIZE, ClassResolvers.cacheDisabled(null)),
+                                    new ObjectEncoder(),
                                     new ServerHandler());
                         }
                     })
