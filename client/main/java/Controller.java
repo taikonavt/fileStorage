@@ -7,14 +7,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 
-import java.io.IOException;
 import java.nio.file.*;
+import java.util.List;
 
 public class Controller {
     private Main main;
-    private Path startDir = FileSystems.getDefault().getPath("client/localStorage/").toAbsolutePath();
-    private static final String PREVIOUS_DIR = "..";
-    private Path currentDir;
+    private Path currentLocaleDir;
+    private Path currentCloudDir = Paths.get("");
 
     @FXML ProgressBar operationProgress;
     @FXML HBox authPanel;
@@ -32,34 +31,45 @@ public class Controller {
         main.auth(login, pass);
     }
 
-    public void onSendBtnClick(){
-        Path path = getPathToSelectedItem();
-        if (!Files.isDirectory(path)){
-            Path pathFromStart = path.subpath(startDir.getNameCount(), path.getNameCount());
-            main.sendItem(startDir, pathFromStart);
-        }
+    public void onLocalSendBtnClick(){
+        Path path = getPathToLocalSelectedItem();
+//        Path pathFromStart = path.subpath(main.getStartDir().getNameCount(), path.getNameCount());
+        main.sendItem(path);
+        main.getCloudList(currentCloudDir);
     }
 
-    public void onDeleteBtnClick(){
-        Path path = getPathToSelectedItem();
-        if (!path.equals(startDir)) {
+    public void onLocalDeleteBtnClick(){
+        Path path = getPathToLocalSelectedItem();
+        if (!path.equals(main.getStartDir())) {
             main.deleteItem(path);
         }
-        updateLocalList(currentDir);
+        updateLocalList(currentLocaleDir);
     }
 
-    public void onUpdateBtnClick(){
-        updateLocalList(currentDir);
+    public void onLocalUpdateBtnClick(){
+        updateLocalList(currentLocaleDir);
     }
 
     public void handleMouseClick(MouseEvent arg){
         if (arg.getClickCount() == 2) {
-            Path path = getPathToSelectedItem();
+            Path path = getPathToLocalSelectedItem();
             if (Files.isDirectory(path)) {
                 updateLocalList(path);
-                currentDir = path.normalize();
             }
         }
+    }
+
+    public void onCloudUpdateBtnClick(){
+        main.getCloudList(currentCloudDir);
+    }
+
+    public void onCloudDeleteBtnClick() {
+        main.deleteCloudItem(getPathToCloudSelectedItem());
+        main.getCloudList(currentCloudDir);
+    }
+
+    public void onCloudDownloadBtnClick(){
+
     }
 
     public void setMain(Main main){
@@ -74,38 +84,49 @@ public class Controller {
         actionPanel2.setVisible(true);
         actionPanel2.setManaged(true);
 
-        setLocalList();
+        // устанавливаю в окне список файлов начальной папки
+        updateLocalList(main.getStartDir());
+        main.getCloudList(currentCloudDir);
     }
 
-    private void setLocalList() {
-        currentDir = startDir;
-        updateLocalList(currentDir);
+    public void setAuthClose(){
+        authPanel.setVisible(true);
+
+        actionPanel1.setVisible(false);
+        actionPanel1.setManaged(false);
+        actionPanel2.setVisible(false);
+        actionPanel2.setManaged(false);
     }
 
-    private void updateLocalList(Path path) {
+    private void updateLocalList(Path currentDir) {
+        this.currentLocaleDir = currentDir;
+        List list = CommonMethods.getList(main.getStartDir(), currentDir);
         ObservableList observableList = FXCollections.observableArrayList();
-        if (!path.normalize().equals(startDir)){
-            observableList.add(PREVIOUS_DIR);
-        }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
-            for (Path p : stream){
-                String name = p.getFileName().toString();
-                if (Files.isDirectory(p)){
-                    name = name + "/";
-                }
-                observableList.add(name);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        observableList.addAll(list);
         localList.setItems(observableList);
     }
 
-    private Path getPathToSelectedItem(){
-        String selectedItem = localList.getSelectionModel().getSelectedItems().toString();
-        selectedItem = selectedItem.substring(1, selectedItem.length() - 1);
-        String currentDirStr = currentDir.toAbsolutePath().toString();
-        return Paths.get(currentDirStr, selectedItem);
+    public void setCloudList(List list){
+        ObservableList observableList = FXCollections.observableArrayList();
+        observableList.addAll(list);
+        cloudList.
+        cloudList.setItems(observableList);
     }
 
+    private Path getPathToLocalSelectedItem(){
+        String selectedItem = localList.getSelectionModel().getSelectedItems().toString();
+        selectedItem = selectedItem.substring(1, selectedItem.length() - 1);
+        String currentDirStr = currentLocaleDir.toAbsolutePath().toString();
+        return Paths.get(currentDirStr, selectedItem).normalize();
+    }
+
+    private Path getPathToCloudSelectedItem(){
+        String selectedItem = cloudList.getSelectionModel().getSelectedItems().toString();
+        selectedItem = selectedItem.substring(1, selectedItem.length() - 1);
+        return Paths.get(currentCloudDir.toString(), selectedItem).normalize();
+    }
+
+    public Path getCurrentLocaleDir() {
+        return currentLocaleDir;
+    }
 }

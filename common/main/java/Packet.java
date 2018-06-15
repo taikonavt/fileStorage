@@ -1,7 +1,9 @@
-import java.nio.ByteBuffer;
 
-public interface Packet{
+public interface Packet {
 
+    String getCmd();
 
+    String getLogin();
 
+    void setLogin(String login);
 }

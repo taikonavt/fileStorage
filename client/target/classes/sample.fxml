@@ -15,7 +15,7 @@
     <ProgressBar fx:id="operationProgress" managed="false" visible="false" maxWidth="Infinity"/>
     <HBox fx:id="authPanel">
         <TextField fx:id="loginField" promptText="Логин" HBox.hgrow="ALWAYS"/>
-        <PasswordField fx:id="passField" promptText="Пароль" HBox.hgrow="ALWAYS"/>
+        <PasswordField fx:id="passField" onAction="#onAuthBtnClick" promptText="Пароль" HBox.hgrow="ALWAYS"/>
         <Button onAction="#onAuthBtnClick" text="Авторизоваться" HBox.hgrow="ALWAYS"/>
     </HBox>
     <HBox VBox.vgrow="ALWAYS">
@@ -28,9 +28,9 @@
             </Label>
             <ListView fx:id="localList" onMouseClicked="#handleMouseClick" VBox.vgrow="ALWAYS"/>
             <HBox fx:id="actionPanel1" managed="false" visible="false">
-                <Button onAction="#onSendBtnClick" text="Отправить файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-                <Button onAction="#onDeleteBtnClick" text="Удалить файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-                <Button onAction="#onUpdateBtnClick" text="Обновить" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button onAction="#onLocalSendBtnClick" text="Отправить файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button onAction="#onLocalDeleteBtnClick" text="Удалить файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button onAction="#onLocalUpdateBtnClick" text="Обновить" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
             </HBox>
         </VBox>
         <VBox HBox.hgrow="ALWAYS">
@@ -42,9 +42,9 @@
             </Label>
             <ListView fx:id="cloudList" VBox.vgrow="ALWAYS"/>
             <HBox fx:id="actionPanel2" managed="false" visible="false">
-                <Button text="Скачать файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-                <Button text="Удалить файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-                <Button text="Обновить" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button onAction="#onCloudDownloadBtnClick" text="Скачать файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button onAction="#onCloudDeleteBtnClick" text="Удалить файл" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button onAction="#onCloudUpdateBtnClick" text="Обновить" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
             </HBox>
         </VBox>
     </HBox>

@@ -1,12 +1,11 @@
 import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
-public class Data implements Serializable{
+public class Data implements Serializable, Packet, Server_API{
+    private String cmd = UPLOAD;
     private String login;
     private byte [] bytes;
-    private String pathStr;
+    private String name;
     private int partsAmount;
     private int partNum;
 
@@ -17,8 +16,7 @@ public class Data implements Serializable{
     }
 
     public ByteBuffer readData(){
-        ByteBuffer buf = ByteBuffer.wrap(bytes);
-        return buf;
+        return ByteBuffer.wrap(bytes);
     }
 
     public int getPartsAmount() {
@@ -37,18 +35,25 @@ public class Data implements Serializable{
         this.partNum = partNum;
     }
 
-    public Path getPath() {
-        return Paths.get(pathStr);
+    public String getName() {
+        return name;
     }
 
-    public void setPath(Path path) {
-        pathStr = path.toString();
+    public void setName(String name) {
+        this.name = name;
     }
 
+    @Override
+    public String getCmd() {
+        return cmd;
+    }
+
+    @Override
     public String getLogin() {
         return login;
     }
 
+    @Override
     public void setLogin(String login) {
         this.login = login;
     }
