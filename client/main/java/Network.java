@@ -14,6 +14,7 @@ public class Network implements CommonConst, Server_API{
     private String login = null;
     private boolean auth = false;
     private Main main;
+    private SendingThread sendingThread;
 
     private Network(){
     }
@@ -31,6 +32,7 @@ public class Network implements CommonConst, Server_API{
             try {
                 socket = new Socket(SERVER_URL, PORT);
                 oeos = new ObjectEncoderOutputStream(socket.getOutputStream());
+                sendingThread = new SendingThread(oeos);
                 odis = new ObjectDecoderInputStream(socket.getInputStream());
 
                 send(new EchoMsg());
@@ -126,16 +128,46 @@ public class Network implements CommonConst, Server_API{
         send(fom);
     }
 
+//    private void send(Packet packet){
+//        try {
+//            oeos.writeObject(packet);
+//            oeos.flush();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
     private void send(Packet packet){
-        try {
-            oeos.writeObject(packet);
-            oeos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        sendingThread.send(packet);
     }
 
     public boolean isAuth(){
         return auth;
+    }
+}
+
+class SendingThread{
+    private ObjectEncoderOutputStream oeos;
+    private Packet packet = null;
+
+    SendingThread(ObjectEncoderOutputStream oeos){
+        this.oeos = oeos;
+
+        new Thread(()-> {
+            try {
+                if (packet != null) {
+                    System.out.println("Message sent");
+                    this.oeos.writeObject(packet);
+                    this.oeos.flush();
+                    this.packet = null;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    void send(Packet packet){
+        this.packet = packet;
     }
 }

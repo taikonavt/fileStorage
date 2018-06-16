@@ -109,7 +109,6 @@ public class Controller {
     public void setCloudList(List list){
         ObservableList observableList = FXCollections.observableArrayList();
         observableList.addAll(list);
-        cloudList.
         cloudList.setItems(observableList);
     }
 
