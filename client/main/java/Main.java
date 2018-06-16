@@ -1,12 +1,15 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
 
 import java.nio.file.*;
 import java.util.List;
 
+// используется для запуска оболочки, коммутации классов, работы с файлами
 public class Main extends Application implements CommonConst, Server_API{
     private Network network;
     private Controller controller;
@@ -18,8 +21,6 @@ public class Main extends Application implements CommonConst, Server_API{
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        network = Network.getInstance();
-        network.open();
 
         // запускаю графическую оболочку, отправляю в controller экземпляр main
         FXMLLoader loader = new FXMLLoader(getClass().getResource("sample.fxml"));
@@ -30,6 +31,9 @@ public class Main extends Application implements CommonConst, Server_API{
         primaryStage.setTitle("GeekCloud Client");
         primaryStage.setScene(new Scene(root, 800.0D, 600.0D));
         primaryStage.show();
+
+        network = Network.getInstance();
+        network.open();
 
         network.listenInput(this);
     }
@@ -49,10 +53,9 @@ public class Main extends Application implements CommonConst, Server_API{
         CommonMethods.deleteItem(path);
     }
 
-    public void sendItem(Path path){
+    public void sendItem(Path path, ProgressBar progressBar){
         Data[] dataArray = CommonMethods.getData(path);
-        network.sendData(dataArray);
-
+        network.sendData(dataArray, progressBar);
     }
 
     public void setAuth(boolean isAuth){
@@ -75,14 +78,21 @@ public class Main extends Application implements CommonConst, Server_API{
     }
 
     public void setCloudList(List list){
-        controller.setCloudList(list);
+        controller.updateCloudList(list);
     }
 
     public void deleteCloudItem(Path path){
         network.sendDeleteFile(path);
     }
 
-    public void getFile(Data data){
+    public void downloadCloudItem(Path path){
+        network.sendDownloadFile(path);
+    }
+
+    public void downloadFile(Data data){
         CommonMethods.toAssembleFile(getCurrentDir(), data);
+        Platform.runLater(() -> {
+            controller.updateLocalList(getCurrentDir());
+        });
     }
 }

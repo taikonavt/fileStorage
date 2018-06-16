@@ -1,11 +1,14 @@
 import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
+import javafx.application.Platform;
+import javafx.scene.control.ProgressBar;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.util.List;
 
+// работа с сетью
 public class Network implements CommonConst, Server_API{
     private static Network instance;
     private Socket socket = null;
@@ -14,7 +17,6 @@ public class Network implements CommonConst, Server_API{
     private String login = null;
     private boolean auth = false;
     private Main main;
-    private SendingThread sendingThread;
 
     private Network(){
     }
@@ -32,7 +34,6 @@ public class Network implements CommonConst, Server_API{
             try {
                 socket = new Socket(SERVER_URL, PORT);
                 oeos = new ObjectEncoderOutputStream(socket.getOutputStream());
-                sendingThread = new SendingThread(oeos);
                 odis = new ObjectDecoderInputStream(socket.getInputStream());
 
                 send(new EchoMsg());
@@ -81,10 +82,12 @@ public class Network implements CommonConst, Server_API{
                             break;
                         case GET_LIST:
                             List list = ((ListMsg)reply).getList();
-                            this.main.setCloudList(list);
+                            Platform.runLater(() -> {
+                                this.main.setCloudList(list);
+                            });
                             break;
-                        case UPLOAD:
-                            this.main.getFile((Data)reply);
+                        case DOWNLOAD:
+                            this.main.downloadFile((Data)reply);
                             break;
                     }
                 }
@@ -104,15 +107,23 @@ public class Network implements CommonConst, Server_API{
         send(msg);
     }
 
-    public void sendData(Data[] dataArray){
+    public void sendData(Data[] dataArray, ProgressBar progressBar){
+        // progressBar не работает как нужно. Видимо файл быстро пересылается, но долго разбивается на куски.
+        // Не успел с этим разобраться. Может быть стоит сделать - получил кусок данных, сразу отправил
+        progressBar.setVisible(true);
+        progressBar.setManaged(true);
+        double prog = 0;
         for (int i = 0; i < dataArray.length; i++) {
+            dataArray[i].setCmd(UPLOAD);
             dataArray[i].setLogin(login);
         }
-        new Thread(()-> {
-            for (int i = 0; i < dataArray.length; i++) {
-                send(dataArray[i]);
-            }
-        }).start();
+        for (int i = 0; i < dataArray.length; i++) {
+            send(dataArray[i]);
+            prog = (double) i / dataArray.length;
+            progressBar.setProgress(prog);
+        }
+        progressBar.setVisible(false);
+        progressBar.setManaged(false);
     }
 
     public void sendGetListMessage(Path path){
@@ -128,46 +139,22 @@ public class Network implements CommonConst, Server_API{
         send(fom);
     }
 
-//    private void send(Packet packet){
-//        try {
-//            oeos.writeObject(packet);
-//            oeos.flush();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public void sendDownloadFile(Path path){
+        FileOperationMsg fom = new FileOperationMsg(DOWNLOAD, path);
+        fom.setLogin(login);
+        send(fom);
+    }
 
     private void send(Packet packet){
-        sendingThread.send(packet);
+        try {
+            oeos.writeObject(packet);
+            oeos.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean isAuth(){
         return auth;
-    }
-}
-
-class SendingThread{
-    private ObjectEncoderOutputStream oeos;
-    private Packet packet = null;
-
-    SendingThread(ObjectEncoderOutputStream oeos){
-        this.oeos = oeos;
-
-        new Thread(()-> {
-            try {
-                if (packet != null) {
-                    System.out.println("Message sent");
-                    this.oeos.writeObject(packet);
-                    this.oeos.flush();
-                    this.packet = null;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    void send(Packet packet){
-        this.packet = packet;
     }
 }

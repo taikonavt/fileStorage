@@ -19,9 +19,11 @@ public class Controller {
     @FXML HBox authPanel;
     @FXML TextField loginField;
     @FXML TextField passField;
-    @FXML ListView localList;
+    @FXML ListView localListView;
+    private ObservableList localList;
     @FXML HBox actionPanel1;
-    @FXML ListView cloudList;
+    @FXML ListView cloudListView;
+    private ObservableList cloudList;
     @FXML HBox actionPanel2;
 
     public void onAuthBtnClick(){
@@ -33,8 +35,7 @@ public class Controller {
 
     public void onLocalSendBtnClick(){
         Path path = getPathToLocalSelectedItem();
-//        Path pathFromStart = path.subpath(main.getStartDir().getNameCount(), path.getNameCount());
-        main.sendItem(path);
+        main.sendItem(path, operationProgress);
         main.getCloudList(currentCloudDir);
     }
 
@@ -69,7 +70,7 @@ public class Controller {
     }
 
     public void onCloudDownloadBtnClick(){
-
+        main.downloadCloudItem(getPathToCloudSelectedItem());
     }
 
     public void setMain(Main main){
@@ -85,7 +86,9 @@ public class Controller {
         actionPanel2.setManaged(true);
 
         // устанавливаю в окне список файлов начальной папки
-        updateLocalList(main.getStartDir());
+
+        setLocalListView();
+        setCloudListView();
         main.getCloudList(currentCloudDir);
     }
 
@@ -98,29 +101,37 @@ public class Controller {
         actionPanel2.setManaged(false);
     }
 
-    private void updateLocalList(Path currentDir) {
-        this.currentLocaleDir = currentDir;
-        List list = CommonMethods.getList(main.getStartDir(), currentDir);
-        ObservableList observableList = FXCollections.observableArrayList();
-        observableList.addAll(list);
-        localList.setItems(observableList);
+    private void setLocalListView(){
+        localList = FXCollections.observableArrayList();
+        updateLocalList(main.getStartDir());
+        localListView.setItems(localList);
     }
 
-    public void setCloudList(List list){
-        ObservableList observableList = FXCollections.observableArrayList();
-        observableList.addAll(list);
-        cloudList.setItems(observableList);
+    void updateLocalList(Path currentDir) {
+        this.currentLocaleDir = currentDir;
+        localList.clear();
+        localList.addAll(CommonMethods.getList(main.getStartDir(), currentLocaleDir));
+    }
+
+    void setCloudListView(){
+        cloudList = FXCollections.observableArrayList();
+        cloudListView.setItems(cloudList);
+    }
+
+    void updateCloudList(List list){
+        cloudList.clear();
+        cloudList.addAll(list);
     }
 
     private Path getPathToLocalSelectedItem(){
-        String selectedItem = localList.getSelectionModel().getSelectedItems().toString();
+        String selectedItem = localListView.getSelectionModel().getSelectedItems().toString();
         selectedItem = selectedItem.substring(1, selectedItem.length() - 1);
         String currentDirStr = currentLocaleDir.toAbsolutePath().toString();
         return Paths.get(currentDirStr, selectedItem).normalize();
     }
 
     private Path getPathToCloudSelectedItem(){
-        String selectedItem = cloudList.getSelectionModel().getSelectedItems().toString();
+        String selectedItem = cloudListView.getSelectionModel().getSelectedItems().toString();
         selectedItem = selectedItem.substring(1, selectedItem.length() - 1);
         return Paths.get(currentCloudDir.toString(), selectedItem).normalize();
     }

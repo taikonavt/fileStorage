@@ -1,8 +1,8 @@
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-public class Data implements Serializable, Packet, Server_API{
-    private String cmd = UPLOAD;
+public class Data implements Serializable, Packet, Server_API {
+    private String cmd;
     private String login;
     private byte [] bytes;
     private String name;
@@ -41,6 +41,10 @@ public class Data implements Serializable, Packet, Server_API{
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setCmd(String cmd){
+        this.cmd = cmd;
     }
 
     @Override

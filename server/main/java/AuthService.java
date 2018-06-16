@@ -41,12 +41,9 @@ public class AuthService implements ServerConst{
             String query = "SELECT " + AUTH_COLUMN +
                     " FROM " + TABLE_NAME +
                     " WHERE " + LOGIN_COLUMN + " = '" + login + "';";
-//    System.out.println(query);
             ResultSet resultSet = statement.executeQuery(query);
             if (resultSet.next()){
                 boolean result = resultSet.getBoolean(AUTH_COLUMN);
-//    System.out.println(result);
-//    printAll();
                 return result;
             }
         } catch (SQLException e) {
@@ -60,7 +57,6 @@ public class AuthService implements ServerConst{
             String query = "SELECT " + LOGIN_COLUMN + ", " + PASS_COLUMN +
                     " FROM " + TABLE_NAME +
                     " WHERE " + LOGIN_COLUMN + " = '" + login + "';";
-//    System.out.println(query);
             ResultSet resultSet = statement.executeQuery(query);
             if (resultSet.next()) {
                 if (resultSet.getString(PASS_COLUMN).equals(pass)){
@@ -104,7 +100,6 @@ public class AuthService implements ServerConst{
                 LOGIN_COLUMN + " STRING NOT NULL, " +
                 PASS_COLUMN + " STRING NOT NULL, " +
                 AUTH_COLUMN + " BOOLEAN NOT NULL);";
-//    System.out.println(query);
         statement.execute(query);
     }
 
@@ -120,7 +115,6 @@ public class AuthService implements ServerConst{
         connection.setAutoCommit(false);
         String query = "INSERT INTO " + TABLE_NAME + " (" +
                 LOGIN_COLUMN + ", " + PASS_COLUMN + ", " +  AUTH_COLUMN + ") VALUES(?, ?, ?);";
-//System.out.println(query);
         PreparedStatement ps = connection.prepareStatement(query);
         for (int i = 0; i < 10; i++) {
             ps.setString(1, "user" + i);
@@ -136,10 +130,7 @@ public class AuthService implements ServerConst{
         String query = "UPDATE " + TABLE_NAME +
                 " SET " + AUTH_COLUMN + " = " + (isAuthorized ? 1 : 0) +
                 " WHERE " + LOGIN_COLUMN + " = '" + login + "';";
-//    System.out.println(query);
         int i = statement.executeUpdate(query);
-//    System.out.println(i);
-//    printAll();
         return (i > 0);
     }
 

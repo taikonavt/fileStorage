@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -8,9 +7,11 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+// общие для клиента и сервера методы, работа с файлами
 public class CommonMethods implements CommonConst{
+
+    // разбивает файл на куски, возвращает массив пакетов для отправки
     public static Data[] getData(Path path){
         Data[] dataArray = new Data[0];
         try {
@@ -35,6 +36,7 @@ public class CommonMethods implements CommonConst{
         return dataArray;
     }
 
+    // упаковывает данные в пакет
     private static Data constructData(ByteBuffer buf, Path path, int partsAmount, int partNum){
         Data data = new Data();
         data.writeData(buf);
@@ -67,10 +69,12 @@ public class CommonMethods implements CommonConst{
         }
     }
 
+    // собирает файл из кусков
     public static void toAssembleFile(Path startPath, Data data){
         try {
 
             Path path = Paths.get(startPath.toString(), data.getName());
+            // TODO если первым прийдет пакет с не 0 номером?
             if (data.getPartNum() == 0){
                 if (Files.exists(path))
                     Files.delete(path);
@@ -91,6 +95,7 @@ public class CommonMethods implements CommonConst{
 
     private static final String PREVIOUS_DIR = "..";
 
+    // формирует лист файлов в папке
     public static List getList(Path startDir, Path path){
         List<String> list = new ArrayList<>();
         if (!path.normalize().equals(startDir)){
@@ -109,17 +114,4 @@ public class CommonMethods implements CommonConst{
         }
         return list;
     }
-
-//    public static List getList(Path startDir, Path path){
-//        List<File> list = null;
-//        if (!path.normalize().equals(startDir)){
-//            list.add(new File(PREVIOUS_DIR));
-//        }
-//        try {
-//            list = Files.list(path).map(Path::getFileName).map(Path::toString).map()map(Path::toFile).collect(Collectors.toList());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return list;
-//    }
 }
