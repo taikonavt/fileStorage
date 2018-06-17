@@ -6,6 +6,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.List;
 
@@ -54,8 +59,7 @@ public class Main extends Application implements CommonConst, Server_API{
     }
 
     public void sendItem(Path path, ProgressBar progressBar){
-        Data[] dataArray = CommonMethods.getData(path);
-        network.sendData(dataArray, progressBar);
+        getData(path);
     }
 
     public void setAuth(boolean isAuth){
@@ -94,5 +98,40 @@ public class Main extends Application implements CommonConst, Server_API{
         Platform.runLater(() -> {
             controller.updateLocalList(getCurrentDir());
         });
+    }
+
+    public Data[] getData(Path path){
+        Data[] dataArray = new Data[0];
+        try {
+            RandomAccessFile raf = new RandomAccessFile(path.toFile(), "rw");
+            FileChannel channel = raf.getChannel();
+            ByteBuffer buf = ByteBuffer.allocate(PART_SIZE);
+            int partsAmount = (int) Math.ceil((float) channel.size()/ PART_SIZE);
+            int partNum = 0;
+            dataArray = new Data[partsAmount];
+            while (channel.read(buf) != -1){
+                Data data = constructData(buf, path, partsAmount, partNum);
+                dataArray[partNum] = data;
+                network.sendData(data);
+                partNum++;
+                buf.clear();
+            }
+            raf.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return dataArray;
+    }
+
+    // упаковывает данные в пакет
+    private static Data constructData(ByteBuffer buf, Path path, int partsAmount, int partNum){
+        Data data = new Data();
+        data.writeData(buf);
+        data.setName(path.getFileName().toString());
+        data.setPartsAmount(partsAmount);
+        data.setPartNum(partNum);
+        return data;
     }
 }

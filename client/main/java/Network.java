@@ -6,6 +6,7 @@ import javafx.scene.control.ProgressBar;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
 
 // работа с сетью
@@ -17,8 +18,10 @@ public class Network implements CommonConst, Server_API{
     private String login = null;
     private boolean auth = false;
     private Main main;
+    private volatile LinkedList<Packet> queue;
 
     private Network(){
+        queue = new LinkedList<>();
     }
 
     public static Network getInstance(){
@@ -33,8 +36,9 @@ public class Network implements CommonConst, Server_API{
         if (socket == null || socket.isClosed()) {
             try {
                 socket = new Socket(SERVER_URL, PORT);
-                oeos = new ObjectEncoderOutputStream(socket.getOutputStream());
+//                oeos = new ObjectEncoderOutputStream(socket.getOutputStream());
                 odis = new ObjectDecoderInputStream(socket.getInputStream());
+                startSending();
 
                 send(new EchoMsg());
                 Packet reply = (Packet) odis.readObject();
@@ -55,7 +59,7 @@ public class Network implements CommonConst, Server_API{
         try {
             auth = false;
             send(new CloseMsg());
-            oeos.close();
+//            oeos.close();
             odis.close();
             socket.close();
         } catch (IOException e) {
@@ -110,8 +114,7 @@ public class Network implements CommonConst, Server_API{
     public void sendData(Data[] dataArray, ProgressBar progressBar){
         // progressBar не работает как нужно. Видимо файл быстро пересылается, но долго разбивается на куски.
         // Не успел с этим разобраться. Может быть стоит сделать - получил кусок данных, сразу отправил
-        progressBar.setVisible(true);
-        progressBar.setManaged(true);
+
         double prog = 0;
         for (int i = 0; i < dataArray.length; i++) {
             dataArray[i].setCmd(UPLOAD);
@@ -146,12 +149,39 @@ public class Network implements CommonConst, Server_API{
     }
 
     private void send(Packet packet){
+        queue.add(packet);
+    }
+
+    private void sendPacket(Packet packet){
         try {
             oeos.writeObject(packet);
             oeos.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void startSending(){
+        new Thread(() -> {
+            try {
+                oeos = new ObjectEncoderOutputStream(socket.getOutputStream());
+                while (socket.isConnected()){
+                    if (!queue.isEmpty()) {
+                        sendPacket(queue.getFirst());
+                        queue.removeFirst();
+                    }
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    oeos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     public boolean isAuth(){
